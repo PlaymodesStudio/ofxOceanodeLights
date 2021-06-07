@@ -17,6 +17,8 @@
 #include "oscSenders.h"
 #include "pantiltEditor.h"
 #include "strobeLightController.h"
+#include "e131Client.h"
+#include "fixture.h"
 
 #include "ofxOceanode.h"
 
@@ -30,6 +32,9 @@ static void registerModels(ofxOceanode &o){
     o.registerModel<oscSenders>("Lights");
     o.registerModel<panTiltEditor>("Lights");
     o.registerModel<strobeLightController>("Lights");
+	o.registerModel<e131Client>("Lights");
+	
+	o.registerType<vector<fixture>>("Fixtures");
 }
 }
 

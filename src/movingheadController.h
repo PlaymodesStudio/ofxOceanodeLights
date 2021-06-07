@@ -9,6 +9,7 @@
 #define movingheadController_h
 
 #include "ofxOceanodeNodeModelExternalWindow.h"
+#include "fixture.h"
 
 class movingheadController : public ofxOceanodeNodeModelExternalWindow{
 public:
@@ -62,11 +63,11 @@ private:
     vector<ofParameter<vector<float>>> pan;
     vector<ofParameter<vector<float>>> tilt;
     vector<ofParameter<vector<float>>> intensity;
-//    vector<ofParameter<vector<int>>> colorwheel;
-    vector<ofParameter<vector<float>>> red;
-    vector<ofParameter<vector<float>>> green;
-    vector<ofParameter<vector<float>>> blue;
-//    vector<ofParameter<int>> colorDropdown;
+    vector<ofParameter<vector<int>>> colorwheel;
+//    vector<ofParameter<vector<float>>> red;
+//    vector<ofParameter<vector<float>>> green;
+//    vector<ofParameter<vector<float>>> blue;
+    vector<ofParameter<int>> colorDropdown;
     vector<ofParameter<float>> strobe;
     vector<ofParameter<float>> gobo;
     vector<ofParameter<float>> frost;
@@ -78,6 +79,8 @@ private:
     ofParameter<bool> lampOn;
     ofParameter<bool> lampOff;
     ofParameter<bool> reset;
+	
+	ofParameter<vector<fixture>> output;
     
     int totalSize;
     

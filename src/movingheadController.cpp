@@ -6,6 +6,7 @@
 //
 
 #include "movingheadController.h"
+#include "imgui.h"
 
 movingheadController::movingheadController() : ofxOceanodeNodeModelExternalWindow("Movinghead Controller"){
     numGroups = 3;
@@ -13,34 +14,35 @@ movingheadController::movingheadController() : ofxOceanodeNodeModelExternalWindo
     intensity.resize(numGroups);
     pan.resize(numGroups);
     tilt.resize(numGroups);
-//    colorDropdown.resize(numGroups);
-//    colorwheel.resize(numGroups);
+    colorDropdown.resize(numGroups);
+    colorwheel.resize(numGroups);
     strobe.resize(numGroups);
     gobo.resize(numGroups);
     frost.resize(numGroups);
-    red.resize(numGroups);
-    green.resize(numGroups);
-    blue.resize(numGroups);
-    dmxOutputs.resize(2);
+//    red.resize(numGroups);
+//    green.resize(numGroups);
+//    blue.resize(numGroups);
+    dmxOutputs.resize(3);
     for(int i = 0 ; i < numGroups; i++){
         ofParameter<char> label;
-        addParameter(label.set("Group " + ofToString(i) + "      ----------------------------------", ' '));
+        addParameter(label.set("Group " + ofToString(i) + "      ----------------", ' '));
         addParameter(size[i].set("Size " + ofToString(i), {1}, {1}, {500}));
         addParameter(intensity[i].set("Intensity " + ofToString(i), {0}, {0}, {1}));
         addParameter(pan[i].set("Pan " + ofToString(i), {0}, {-180}, {180}));
         addParameter(tilt[i].set("Tilt " + ofToString(i), {0}, {-180}, {180}));
-//        addParam(createDropdownAbstractParameter("Color " + ofToString(i), {"White", "Red", "Orange", "Yellow", "Green-Blue", "Amber", "Blue Sky", "Green", "UV", "Light Red", "Magenta", "Dark Green", "Dark Yellow", "Blue"}, colorDropdown[i]));
-//        addParam(colorwheel[i].set("Color " + ofToString(i), {0}, {0}, {colorDropdown[i].getMax()}));
-        addParameter(red[i].set("Red " + ofToString(i), {1}, {0}, {1}));
-        addParameter(green[i].set("Green " + ofToString(i), {1}, {0}, {1}));
-        addParameter(blue[i].set("Blue " + ofToString(i), {1}, {0}, {1}));
-        addParameter(strobe[i].set("Zoom " + ofToString(i), 1, 0, 1));
+        addParameterDropdown(colorDropdown[i], "Color " + ofToString(i), 0, {"White", "Red", "Orange", "Aquamarine", "Green", "Light Green", "Lavander", "Pink", "Yellow", "Magenta", "Cyan", "CTO 260", "CTO 190", "CTB 8000", "Blue"}, ofxOceanodeParameterFlags_DisableSavePreset | ofxOceanodeParameterFlags_DisableInConnection);
+        addParameter(colorwheel[i].set("Col i " + ofToString(i), {0}, {0}, {colorDropdown[i].getMax()}));
+//        addParameter(red[i].set("Red " + ofToString(i), {1}, {0}, {1}));
+//        addParameter(green[i].set("Green " + ofToString(i), {1}, {0}, {1}));
+//        addParameter(blue[i].set("Blue " + ofToString(i), {1}, {0}, {1}));
+        addParameter(strobe[i].set("Frost " + ofToString(i), 1, 0, 1));
         addParameter(gobo[i].set("Gobo " + ofToString(i), 0, 0, 1));
         addParameter(frost[i].set("Focus " + ofToString(i), 0, 0, 1));
         
-//        dropdownListeners.push(colorDropdown[i].newListener([this, i](int &ind){
-//            colorwheel[i] = vector<int>(1, ind);
-//        }));
+        dropdownListeners.push(colorDropdown[i].newListener([this, i](int &ind){
+            colorwheel[i] = vector<int>(1, ind);
+        }));
+        
         sizeListeners.push(size[i].newListener([this](int &s){
             totalSize = 0;
             for(auto s : size) totalSize += s;
@@ -59,12 +61,14 @@ movingheadController::movingheadController() : ofxOceanodeNodeModelExternalWindo
     addOutputParameter(panOutput.set("Pan Output", {0}, {-180}, {180}));
     addOutputParameter(tiltOutput.set("Tilt Output", {0}, {-180}, {180}));
     addOutputParameter(colorOutput.set("Color Output", {0}, {0}, {1}));
+	addOutputParameter(output.set("Output", {}));
     
     
     indexClicked = -1;
     isHorizontal = true;
     
-    totalSize = 4;
+    totalSize = 0;
+    for(auto s : size) totalSize += s;
     panRange = 540;
     tiltRange = 271;
 }
@@ -104,6 +108,11 @@ void movingheadController::update(ofEventArgs &a){
     panInfo.resize(totalSize, .5);
     tiltInfo.resize(totalSize, .5);
     colorInfo.resize(totalSize*3, .5); //3 color components;
+	
+	fixture fix;
+	fix.startUniverse = 1;
+	fix.startChannel = 10;
+	fix.data.resize(4);
     
     for(int i = 0; i < numGroups; i++){
         int accumulateSizes = 0;
@@ -113,38 +122,76 @@ void movingheadController::update(ofEventArgs &a){
         for(int j = 0; j < size[i]; j++){
             int index = j + accumulateSizes;
             
-            dmxInfo[index][0] = 30.0/255.0;
             
+            //color wheel
+            vector<int> dmxColowheelValuesFromIndex{0, 9, 18, 26, 35, 43, 52, 60, 69, 77, 86, 94, 103, 111, 120};
+            dmxInfo[index][7] = dmxColowheelValuesFromIndex.at(getValueAtIndex(colorwheel[i].get(), j))/255.0f;
+            //dmxInfo[index][0] = getValueAtIndex(colorwheel[i].get(), j);
             
+            //Strobe
+            dmxInfo[index][1] = 1;//ofMap(strobe[i], 0, 1, 0, 1);
             
             //dimmer
             float dimmerAtIndex = getValueAtIndex(intensity[i].get(), j) * masterFader;
-            dmxInfo[index][1] = dimmerAtIndex;
+            dmxInfo[index][2] = dimmerAtIndex;
             
-            dmxInfo[index][2] = 1 - getValueAtIndex(red[i].get(), j);
-            dmxInfo[index][3] = 1 - getValueAtIndex(green[i].get(), j);
-            dmxInfo[index][4] = 1 - getValueAtIndex(blue[i].get(), j);
+            dmxInfo[index][3] = ofMap(gobo[i], 0, 1, 0, 71.0/255.0);
             
-            dmxInfo[index][16] = frost[i];
-            dmxInfo[index][17] = frost[i]*255 - int(frost[i]*255);
+            //Prism
+            dmxInfo[index][4] = 0;
+            dmxInfo[index][5] = 0;
+            
+            //Efects
+            dmxInfo[index][6] = 0;
+            
+            dmxInfo[index][7] = frost[i];
+            
+            dmxInfo[index][8] = ofMap(strobe[i], 0, 1, 0, 1);
+            
+//            dmxInfo[index][2] = 1 - getValueAtIndex(red[i].get(), j);
+//            dmxInfo[index][3] = 1 - getValueAtIndex(green[i].get(), j);
+//            dmxInfo[index][4] = 1 - getValueAtIndex(blue[i].get(), j);
             
             //pan
             float panAtIndex = getValueAtIndex(pan[i].get(), j);
             panInfo[index] = ofClamp(panAtIndex, -180, 180);
             panAtIndex = ofMap(panAtIndex, -panRange/2 + panOffset[index], panRange/2 + panOffset[index], 0, 1, true);
-            dmxInfo[index][18] = panAtIndex;
-            dmxInfo[index][19] = panAtIndex*255 - int(panAtIndex*255);
+            dmxInfo[index][9] = panAtIndex;
+            dmxInfo[index][10] = panAtIndex*255 - int(panAtIndex*255);
+			fix.data[0] = dmxInfo[index][9]*255;
+			fix.data[2] = dmxInfo[index][10]*255;
             
             //tilt
             float tiltAtIndex = getValueAtIndex(tilt[i].get(), j);
             tiltInfo[index] = ofClamp(tiltAtIndex, -180, 180);
             tiltAtIndex = ofMap(-tiltAtIndex, -tiltRange/2 + tiltOffset[index], tiltRange/2 + tiltOffset[index], 0, 1, true);
-            dmxInfo[index][20] = tiltAtIndex;
-            dmxInfo[index][21] = tiltAtIndex*255 - int(tiltAtIndex*255);
+            dmxInfo[index][11] = tiltAtIndex;
+            dmxInfo[index][12] = tiltAtIndex*255 - int(tiltAtIndex*255);
+            fix.data[1] = dmxInfo[index][11]*255;
+			fix.data[3] = dmxInfo[index][12]*255;
+            
+            //Function
+            dmxInfo[index][13] = 0;
+            
+            //Reset
+            if(reset){
+                dmxInfo[index][14] = 1;
+            }else{
+                dmxInfo[index][14] = 0;
+            }
+            
+            //Lamp Control
+            if(lampOn)
+                dmxInfo[index][15] = 101.0f/255.0f;
+            else if(lampOff){
+                dmxInfo[index][15] = 100.0f/255.0f;
+            }else{
+                dmxInfo[index][15] = 0;
+            }
             
             
             //zoom
-            dmxInfo[index][15] = ofMap(strobe[i], 0, 1, 0, 1);
+            //dmxInfo[index][15] = ofMap(strobe[i], 0, 1, 0, 1);
             
             /*
             //pan/tilt speed
@@ -164,63 +211,55 @@ void movingheadController::update(ofEventArgs &a){
             
             //frost
             dmxInfo[index][13] = ofMap(frost[i], 0, 1, 0, 1);
-            
-            if(lampOn)
-                dmxInfo[index][15] = 84.0f/255.0f;
-            else if(lampOff){
-                dmxInfo[index][15] = 75.0f/255.0f;
-            }else if(reset){
-                dmxInfo[index][15] = 10.0f/255.0f;
-            }else{
-                dmxInfo[index][15] = 0;
-            }
+            */
             
             
-            
-            
-            ofColor colorValue;
+            ofFloatColor colorValue;
             switch (int(getValueAtIndex(colorwheel[i].get(), j))) {
                 case 0:
-                    colorValue = ofColor::white;
+                    colorValue = ofFloatColor::white;
                     break;
                 case 1:
-                    colorValue = ofColor::red;
+                    colorValue = ofFloatColor::red;
                     break;
                 case 2:
-                    colorValue = ofColor::orange;
+                    colorValue = ofFloatColor::orange;
                     break;
                 case 3:
-                    colorValue = ofColor::yellow;
+                    colorValue = ofFloatColor::aquamarine;
                     break;
                 case 4:
-                    colorValue = ofColor::blueViolet;
+                    colorValue = ofFloatColor::green;
                     break;
                 case 5:
-                    colorValue = ofColor(231, 194, 81);
+                    colorValue = ofFloatColor::lightGreen;
                     break;
                 case 6:
-                    colorValue = ofColor::skyBlue;
+                    colorValue = ofFloatColor::lavender;
                     break;
                 case 7:
-                    colorValue = ofColor::green;
+                    colorValue = ofFloatColor::pink;
                     break;
                 case 8:
-                    colorValue = ofColor(46, 48, 89);
+                    colorValue = ofFloatColor::yellow;//(46, 48, 89);
                     break;
                 case 9:
-                    colorValue = ofColor::paleVioletRed;
+                    colorValue = ofFloatColor::magenta;
                     break;
                 case 10:
-                    colorValue = ofColor::magenta;
+                    colorValue = ofFloatColor::cyan;
                     break;
                 case 11:
-                    colorValue = ofColor::darkGreen;
+                    colorValue = ofFloatColor(0.971, 0.783, 0.277);
                     break;
                 case 12:
-                    colorValue = ofColor::greenYellow;
+                    colorValue = ofFloatColor(0.964, 0.856, 0,529);
                     break;
                 case 13:
-                    colorValue = ofColor::blue;
+                    colorValue = ofFloatColor(0.590, 0.779, 0.729);
+                    break;
+                case 14:
+                    colorValue = ofFloatColor::blue;
                     break;
                     
                     
@@ -228,13 +267,19 @@ void movingheadController::update(ofEventArgs &a){
                     colorValue = ofColor::white;
                     break;
             }
-            */
-            colorInfo[index*3] = getValueAtIndex(red[i].get(), j) * dimmerAtIndex;
-            colorInfo[(index*3)+1] = getValueAtIndex(green[i].get(), j) * dimmerAtIndex;
-            colorInfo[(index*3)+2] = getValueAtIndex(blue[i].get(), j) * dimmerAtIndex;
+            
+//            colorInfo[index*3] = getValueAtIndex(red[i].get(), j) * dimmerAtIndex;
+//            colorInfo[(index*3)+1] = getValueAtIndex(green[i].get(), j) * dimmerAtIndex;
+//            colorInfo[(index*3)+2] = getValueAtIndex(blue[i].get(), j) * dimmerAtIndex;
+            
+            colorInfo[index*3] = colorValue.r * dimmerAtIndex;
+            colorInfo[(index*3)+1] = colorValue.g * dimmerAtIndex;
+            colorInfo[(index*3)+2] = colorValue.b * dimmerAtIndex;
              
         }
     }
+	
+	output = vector<fixture>(1, fix);
     
     vector<float> tempOutput(dmxInfo.size()*nChannels/2);
     for(int i = 0; i < (dmxInfo.size()*nChannels / 2); i++){

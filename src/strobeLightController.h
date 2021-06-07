@@ -9,6 +9,7 @@
 #define strobeLightController_h
 
 #include "ofxOceanodeNodeModel.h"
+#include "fixture.h"
 
 class strobeLightController : public ofxOceanodeNodeModel{
 public:
@@ -21,13 +22,15 @@ public:
     void rgbToRgbw(float &r, float &g, float &b, float &w, bool clamp);
     
     void presetHasLoaded() override {
-        red = {0};
-        green = {0};
-        blue = {0};
-        fader = {0};
+//        red = {0};
+//        green = {0};
+//        blue = {0};
+//        fader = {0};
     };
     
 private:
+	
+	ofEventListener listener;
     
     ofParameter<int> numElements;
 //    ofParameter<int> lightType;
@@ -39,8 +42,10 @@ private:
     ofParameter<float> masterFader;
     ofParameter<vector<float>> strobeRate;
     ofParameter<vector<float>> strobeWidth;
-    vector<ofParameter<vector<float>>> dmxOutputs;
     ofParameter<vector<float>> colorOutput;
+	ofParameter<vector<fixture>> output;
+	
+	vector<fixture> fixtures;
 };
 
 #endif /* strobeLightController_h */

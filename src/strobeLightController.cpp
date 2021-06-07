@@ -10,7 +10,7 @@
 
 void strobeLightController::setup(){
 //    addParameter(lightType.set("Light Type", 0, 0, 1));
-    addParameter(numElements.set("Num Elements", 6, 1, 1000));
+    addInspectorParameter(numElements.set("Num Elements", 6, 1, INT_MAX));
     addParameter(red.set("Red", {1}, {0}, {1}));
     addParameter(green.set("Green", {1}, {0}, {1}));
     addParameter(blue.set("Blue", {1}, {0}, {1}));
@@ -20,10 +20,13 @@ void strobeLightController::setup(){
     addParameter(strobeWidth.set("Pulse Width", {1}, {0}, {1}));
     addParameter(masterFader.set("Master Fader", 1, 0, 1));
     addParameter(colorOutput.set("Color Output", {0}, {0}, {1}));
-    dmxOutputs.resize(NUM_OUTPUTS);
-    for(int i = 0; i < NUM_OUTPUTS; i++){
-        addParameter(dmxOutputs[i].set("Dmx Output " + ofToString(i), {0}, {0}, {1}));
-    }
+	addParameter(output.set("Output", {}));
+	
+	listener = numElements.newListener([this](int &i){
+		fixtures.resize(i);
+	});
+	
+	fixtures.resize(numElements);
 }
 
 void strobeLightController::update(ofEventArgs &e){
@@ -37,64 +40,66 @@ void strobeLightController::update(ofEventArgs &e){
     int elementSize = 12;
     int elementsPerUniverse = 6;
     int fixtureSize = 79;
-
-//    switch (lightType) {
-//        case 0:
-//            elementSize = 4;
-//            break;
-//        case 1:
-//            elementSize = 4;
-//            break;
-//
-//        default:
-//            break;
-//    }
     
-    
-    
-    vector<vector<float>> tempOutputs(NUM_OUTPUTS);
     vector<float> tempColors;
     
-    for(int i = 0; i < NUM_OUTPUTS; i++){
-        tempOutputs[i].reserve(elementsPerUniverse*fixtureSize);
-    }
+//    for(int i = 0; i < NUM_OUTPUTS; i++){
+//        tempOutputs[i].reserve(elementsPerUniverse*fixtureSize);
+//    }
     
-    tempColors.resize(numElements*3*12);
+    tempColors.resize(numElements*3);
     vector<float> black = {0,0};
     vector<float> fixturePrefs = {masterFader.get(), 0, 0, 0, 0, 0, 0};
-    if(fader->size() == elementSize*numElements){
-        
-    }else if(fader->size() == elementSize*numElements*3){
-        for(int i = 0; i < numElements; i++){
-            int univers = i/6;
-            for(int j = 0; j < elementSize; j++){
-                int index = (i*elementSize*3)+(j*3);
-                vector<float> rgbw(fader->begin()+index, fader->begin()+index+4);
-                rgbToRgbw(rgbw[0], rgbw[1], rgbw[2], rgbw[3], false);
-                tempOutputs[univers].insert(tempOutputs[univers].end(), rgbw.begin(), rgbw.end());
-                tempOutputs[univers].insert(tempOutputs[univers].end(), black.begin(), black.end());
-            }
-            
-            tempOutputs[univers].insert(tempOutputs[univers].end(), fixturePrefs.begin(), fixturePrefs.end());
-        }
-        for(int i = 0; i < NUM_OUTPUTS; i++){
-            dmxOutputs[i] = tempOutputs[i];
-        }
-    }
+//    if(fader->size() == numElements){
+//        for(int i = 0; i < numElements; i++){
+//			tempColors[(i*3)] = getValueForPosition(red, i) * fader->at(i);
+//			tempColors[(i*3)+1] = getValueForPosition(green, i) * fader->at(i);
+//			tempColors[(i*3)+2] = getValueForPosition(blue, i) * fader->at(i);
+//		}
+//    }
+//	else if(fader->size() == numElements*3){
+//		for(int i = 0; i < numElements; i++){
+//			tempColors[(i*3)] = getValueForPosition(red, i) * fader->at((i*3));
+//			tempColors[(i*3)+1] = getValueForPosition(green, i) * fader->at((i*3)+1);
+//			tempColors[(i*3)+2] = getValueForPosition(blue, i) * fader->at((i*3)+2);
+//		}
+////        for(int i = 0; i < numElements; i++){
+////            int univers = i/6;
+////            for(int j = 0; j < elementSize; j++){
+////                int index = (i*elementSize*3)+(j*3);
+////                vector<float> rgbw(fader->begin()+index, fader->begin()+index+4);
+////                rgbToRgbw(rgbw[0], rgbw[1], rgbw[2], rgbw[3], false);
+////                tempOutputs[univers].insert(tempOutputs[univers].end(), rgbw.begin(), rgbw.end());
+////                tempOutputs[univers].insert(tempOutputs[univers].end(), black.begin(), black.end());
+////            }
+////
+////            tempOutputs[univers].insert(tempOutputs[univers].end(), fixturePrefs.begin(), fixturePrefs.end());
+////        }
+////        for(int i = 0; i < NUM_OUTPUTS; i++){
+////            dmxOutputs[i] = tempOutputs[i];
+////        }
+//    }
+//	else{
+//		for(int i = 0; i < numElements; i++){
+//			tempColors[(i*3)] = getValueForPosition(red, i) * getValueForPosition(fader, i);
+//			tempColors[(i*3)+1] = getValueForPosition(green, i) * getValueForPosition(fader, i);
+//			tempColors[(i*3)+2] = getValueForPosition(blue, i) * getValueForPosition(fader, i);
+//		}
+//	}
     
     
-    
-//    for(int i = 0; i < numElements; i++){
-//        float posSaturate = getValueForPosition(saturate, i);
-//        float posFader = getValueForPosition(fader, i);
-//
-//        float red_ = ((getValueForPosition(red, i) * (1-posSaturate)) + (1 * posSaturate)) * posFader * masterFader;
-//        float green_ = ((getValueForPosition(green, i) * (1-posSaturate)) + (1 * posSaturate)) * posFader * masterFader;
-//        float blue_ = ((getValueForPosition(blue, i) * (1-posSaturate)) + (1 * posSaturate)) * posFader * masterFader;
-//
-//        tempColors[(i*3)] = red_;
-//        tempColors[(i*3)+1] = green_;
-//        tempColors[(i*3)+2] = blue_;
+    for(int i = 0; i < numElements; i++){
+        float posSaturate = getValueForPosition(saturate, i);
+        float posFader = getValueForPosition(fader, i);
+
+        float red_ = ((getValueForPosition(red, i) * (1-posSaturate)) + (1 * posSaturate)) * posFader * masterFader;
+        float green_ = ((getValueForPosition(green, i) * (1-posSaturate)) + (1 * posSaturate)) * posFader * masterFader;
+        float blue_ = ((getValueForPosition(blue, i) * (1-posSaturate)) + (1 * posSaturate)) * posFader * masterFader;
+
+        tempColors[(i*3)] = red_;
+        tempColors[(i*3)+1] = green_;
+        tempColors[(i*3)+2] = blue_;
+	}
 //
 ////        switch (lightType) {
 ////            case 0:
