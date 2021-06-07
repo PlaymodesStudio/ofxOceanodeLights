@@ -14,7 +14,7 @@
 #include "followIndexsToMovingHeads.h"
 #include "followPoint.h"
 #include "movingheadController.h"
-#include "oscSender.h"
+#include "oscSenders.h"
 #include "pantiltEditor.h"
 #include "strobeLightController.h"
 
@@ -27,7 +27,7 @@ static void registerModels(ofxOceanode &o){
     o.registerModel<followIndexsToMovingHeads>("Lights");
     o.registerModel<followPoint>("Lights");
     o.registerModel<movingheadController>("Lights");
-    o.registerModel<oscSender>("Lights");
+    o.registerModel<oscSenders>("Lights");
     o.registerModel<panTiltEditor>("Lights");
     o.registerModel<strobeLightController>("Lights");
 }

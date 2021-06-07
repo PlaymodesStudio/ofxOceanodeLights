@@ -5,18 +5,18 @@
 //  Created by Eduard Frigola Bagué on 14/11/2018.
 //
 
-#ifndef oscSender_h
-#define oscSender_h
+#ifndef oscSenders_h
+#define oscSenders_h
 
 #include "ofxOceanodeNodeModel.h"
 #include "ofxOsc.h"
 
-class oscSender : public ofxOceanodeNodeModel{
+class oscSenders : public ofxOceanodeNodeModel{
 public:
-    oscSender() : ofxOceanodeNodeModel("Osc Sender"){
+    oscSenders() : ofxOceanodeNodeModel("Osc Sender"){
         sender = nullptr;
     };
-    ~oscSender(){};
+    ~oscSenders(){};
     
     void setup() override;
     void update(ofEventArgs &a) override;
@@ -42,4 +42,4 @@ private:
     ofxOscSender* sender;
 };
 
-#endif /* oscSender_h */
+#endif /* oscSenders_h */

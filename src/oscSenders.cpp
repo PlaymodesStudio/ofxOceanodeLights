@@ -5,9 +5,9 @@
 //  Created by Eduard Frigola Bagué on 14/11/2018.
 //
 
-#include "oscSender.h"
+#include "oscSenders.h"
 
-void oscSender::setup(){
+void oscSenders::setup(){
     addParameter(host.set("Host", "127.0.0.1"), ofxOceanodeParameterFlags_DisableSavePreset);
     addParameter(port.set("Port", "55555"), ofxOceanodeParameterFlags_DisableSavePreset);
     addParameter(pan.set("Pan In", {0}, {-180}, {180}));
@@ -27,7 +27,7 @@ void oscSender::setup(){
     setupSender();
 }
 
-void oscSender::update(ofEventArgs &a){
+void oscSenders::update(ofEventArgs &a){
     auto sendBanksStartingAtIndex = [this](vector<float> pan, vector<float> tilt, int index) -> int{
         for(int i = 0; i < pan.size(); i++){
             ofxOscMessage m;
