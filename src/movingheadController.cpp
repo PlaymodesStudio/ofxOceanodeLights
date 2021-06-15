@@ -35,9 +35,9 @@ movingheadController::movingheadController() : ofxOceanodeNodeModelExternalWindo
 //        addParameter(red[i].set("Red " + ofToString(i), {1}, {0}, {1}));
 //        addParameter(green[i].set("Green " + ofToString(i), {1}, {0}, {1}));
 //        addParameter(blue[i].set("Blue " + ofToString(i), {1}, {0}, {1}));
-        addParameter(strobe[i].set("Frost " + ofToString(i), 1, 0, 1));
+        addParameter(strobe[i].set("Focus " + ofToString(i), 1, 0, 1));
         addParameter(gobo[i].set("Gobo " + ofToString(i), 0, 0, 1));
-        addParameter(frost[i].set("Focus " + ofToString(i), 0, 0, 1));
+        addParameter(frost[i].set("Frost " + ofToString(i), 0, 0, 1));
         
         dropdownListeners.push(colorDropdown[i].newListener([this, i](int &ind){
             colorwheel[i] = vector<int>(1, ind);
@@ -70,7 +70,12 @@ movingheadController::movingheadController() : ofxOceanodeNodeModelExternalWindo
     totalSize = 0;
     for(auto s : size) totalSize += s;
     panRange = 540;
-    tiltRange = 271;
+    tiltRange = 247;
+
+	channels.resize(3);
+	channels[0] = {225, 209, 193, 177, 161};
+	channels[1] = {145, 129, 113, 97, 81};
+	channels[2] = {65, 49, 33, 17, 1};
 }
 
 void movingheadController::loadCalibration(){
@@ -80,11 +85,13 @@ void movingheadController::loadCalibration(){
         if(json["size"].get<int>() == totalSize){
             panOffset = json["panOffset"].get<vector<float>>();
             tiltOffset = json["tiltOffset"].get<vector<float>>();
+			focusOffset = json["focusOffset"].get<vector<float>>();
             loaded = true;
         }
     }if(!loaded){
         panOffset = vector<float>(totalSize, 0);
         tiltOffset = vector<float>(totalSize, 0);
+		focusOffset = vector<float>(totalSize, 0);
     }
 }
 
@@ -93,11 +100,12 @@ void movingheadController::saveCalibration(){
     json["size"] = totalSize;
     json["panOffset"] = panOffset;
     json["tiltOffset"] = tiltOffset;
+	json["focusOffset"] = focusOffset;
     ofSavePrettyJson("MovingHeadCalibration_" + ofToString(getNumIdentifier()) + ".json", json);
 }
 
 void movingheadController::update(ofEventArgs &a){
-    int nChannels = 23;
+    int nChannels = 16;
     
     vector<vector<float>> dmxInfo;
     vector<float> panInfo;
@@ -109,10 +117,7 @@ void movingheadController::update(ofEventArgs &a){
     tiltInfo.resize(totalSize, .5);
     colorInfo.resize(totalSize*3, .5); //3 color components;
 	
-	fixture fix;
-	fix.startUniverse = 1;
-	fix.startChannel = 10;
-	fix.data.resize(4);
+	vector<fixture> fixtures(totalSize);
     
     for(int i = 0; i < numGroups; i++){
         int accumulateSizes = 0;
@@ -122,44 +127,50 @@ void movingheadController::update(ofEventArgs &a){
         for(int j = 0; j < size[i]; j++){
             int index = j + accumulateSizes;
             
-            
+            auto &fix = fixtures[index];
+			fix.startUniverse = 1;
+			fix.startChannel = channels[i][j];
+			fix.data.resize(nChannels);
+			
             //color wheel
             vector<int> dmxColowheelValuesFromIndex{0, 9, 18, 26, 35, 43, 52, 60, 69, 77, 86, 94, 103, 111, 120};
             dmxInfo[index][7] = dmxColowheelValuesFromIndex.at(getValueAtIndex(colorwheel[i].get(), j))/255.0f;
             //dmxInfo[index][0] = getValueAtIndex(colorwheel[i].get(), j);
+			fix.data[0] = dmxColowheelValuesFromIndex.at(getValueAtIndex(colorwheel[i].get(), j));
             
             //Strobe
-            dmxInfo[index][1] = 1;//ofMap(strobe[i], 0, 1, 0, 1);
+			fix.data[1] = 255;
             
             //dimmer
             float dimmerAtIndex = getValueAtIndex(intensity[i].get(), j) * masterFader;
-            dmxInfo[index][2] = dimmerAtIndex;
-            
-            dmxInfo[index][3] = ofMap(gobo[i], 0, 1, 0, 71.0/255.0);
+//            dmxInfo[index][2] = dimmerAtIndex;
+//
+//            dmxInfo[index][3] = ofMap(gobo[i], 0, 1, 0, 71.0/255.0);
+			fix.data[2] = dimmerAtIndex * 255;
             
             //Prism
-            dmxInfo[index][4] = 0;
-            dmxInfo[index][5] = 0;
+//            dmxInfo[index][4] = 0;
+//            dmxInfo[index][5] = 0;
+			
+			//Gobo
+			fix.data[3] = ofMap(gobo[i], 0, 1, 0, 71);
             
             //Efects
-            dmxInfo[index][6] = 0;
-            
-            dmxInfo[index][7] = frost[i];
-            
-            dmxInfo[index][8] = ofMap(strobe[i], 0, 1, 0, 1);
-            
-//            dmxInfo[index][2] = 1 - getValueAtIndex(red[i].get(), j);
-//            dmxInfo[index][3] = 1 - getValueAtIndex(green[i].get(), j);
-//            dmxInfo[index][4] = 1 - getValueAtIndex(blue[i].get(), j);
+
+			//Frost
+			fix.data[7] = frost[i] * 255;
+			
+			//Focus
+			fix.data[8] = (strobe[i] + focusOffset[index]) * 255;
             
             //pan
             float panAtIndex = getValueAtIndex(pan[i].get(), j);
             panInfo[index] = ofClamp(panAtIndex, -180, 180);
-            panAtIndex = ofMap(panAtIndex, -panRange/2 + panOffset[index], panRange/2 + panOffset[index], 0, 1, true);
+            panAtIndex = ofMap(panAtIndex, -panRange/2 + panOffset[index] - 180, panRange/2 + panOffset[index] - 180, 0, 1, true);
             dmxInfo[index][9] = panAtIndex;
             dmxInfo[index][10] = panAtIndex*255 - int(panAtIndex*255);
-			fix.data[0] = dmxInfo[index][9]*255;
-			fix.data[2] = dmxInfo[index][10]*255;
+			fix.data[9] = dmxInfo[index][9]*255;
+			fix.data[10] = dmxInfo[index][10]*255;
             
             //tilt
             float tiltAtIndex = getValueAtIndex(tilt[i].get(), j);
@@ -167,26 +178,26 @@ void movingheadController::update(ofEventArgs &a){
             tiltAtIndex = ofMap(-tiltAtIndex, -tiltRange/2 + tiltOffset[index], tiltRange/2 + tiltOffset[index], 0, 1, true);
             dmxInfo[index][11] = tiltAtIndex;
             dmxInfo[index][12] = tiltAtIndex*255 - int(tiltAtIndex*255);
-            fix.data[1] = dmxInfo[index][11]*255;
-			fix.data[3] = dmxInfo[index][12]*255;
+            fix.data[11] = dmxInfo[index][11]*255;
+			fix.data[12] = dmxInfo[index][12]*255;
             
             //Function
-            dmxInfo[index][13] = 0;
+            fix.data[13] = 24;
             
             //Reset
             if(reset){
-                dmxInfo[index][14] = 1;
+                fix.data[14] = 255;
             }else{
-                dmxInfo[index][14] = 0;
+                fix.data[14] = 0;
             }
             
             //Lamp Control
             if(lampOn)
-                dmxInfo[index][15] = 101.0f/255.0f;
+                fix.data[15] = 101;
             else if(lampOff){
-                dmxInfo[index][15] = 100.0f/255.0f;
+                fix.data[15] = 100;
             }else{
-                dmxInfo[index][15] = 0;
+                fix.data[15] = 0;
             }
             
             
@@ -279,7 +290,7 @@ void movingheadController::update(ofEventArgs &a){
         }
     }
 	
-	output = vector<fixture>(1, fix);
+	output = fixtures;
     
     vector<float> tempOutput(dmxInfo.size()*nChannels/2);
     for(int i = 0; i < (dmxInfo.size()*nChannels / 2); i++){
@@ -313,6 +324,8 @@ void movingheadController::drawInExternalWindow(ofEventArgs &e){
             ofDrawBitmapString(ofToString(panOffset[i]), point.getCenter());
         }else if(ofGetKeyPressed('t')){
             ofDrawBitmapString(ofToString(tiltOffset[i]), point.getCenter());
+        }else if(ofGetKeyPressed('f')){
+            ofDrawBitmapString(ofToString(focusOffset[i]), point.getCenter());
         }
         ofPushStyle();
         ofSetColor(255, 127);
@@ -323,6 +336,8 @@ void movingheadController::drawInExternalWindow(ofEventArgs &e){
             offset = -panOffset[i] * float(max(point.getWidth(), point.getHeight()))/2;
         }else if(ofGetKeyPressed('t')){
             offset = -tiltOffset[i] * float(max(point.getWidth(), point.getHeight()))/2;
+        }else if(ofGetKeyPressed('f')){
+            offset = -focusOffset[i] * float(max(point.getWidth(), point.getHeight()))/2;
         }
         if(isHorizontal)
             sliderVal.setFromCenter(point.getCenter().x, point.getCenter().y + offset, point.getWidth(), 10);
@@ -383,6 +398,8 @@ void movingheadController::mousePressed(ofMouseEventArgs &a){
             originalValue = panOffset[indexClicked];
         }else if(ofGetKeyPressed('t')){
             originalValue = tiltOffset[indexClicked];
+        }else if(ofGetKeyPressed('f')){
+            originalValue = focusOffset[indexClicked];
         }
         initialClicPos = a;
     }
@@ -402,6 +419,8 @@ void movingheadController::mouseDragged(ofMouseEventArgs &a){
                 panOffset[indexClicked] = originalValue + modVal;
             }else if(ofGetKeyPressed('t')){
                 tiltOffset[indexClicked] = originalValue + modVal;
+            }else if(ofGetKeyPressed('f')){
+                focusOffset[indexClicked] = originalValue + modVal;
             }
             ofLog() <<"Index: " << indexClicked << " Amount: "<< ofClamp(-amountMoved.y/(externalWindowRect.height/2), -1, 1) ;
         }else{
@@ -411,6 +430,8 @@ void movingheadController::mouseDragged(ofMouseEventArgs &a){
                 panOffset[indexClicked] = originalValue + modVal;
             }else if(ofGetKeyPressed('t')){
                 tiltOffset[indexClicked] = originalValue + modVal;
+            }else if(ofGetKeyPressed('f')){
+                focusOffset[indexClicked] = originalValue + modVal;
             }
             ofLog() <<"Index: " << indexClicked << " Amount: "<< ofClamp(amountMoved.x /(externalWindowRect.width/2), -1, 1);
         }

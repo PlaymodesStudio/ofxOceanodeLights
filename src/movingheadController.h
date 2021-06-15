@@ -86,6 +86,7 @@ private:
     
     vector<float> panOffset;
     vector<float> tiltOffset;
+	vector<float> focusOffset;
     
     float originalValue;
     vector<ofRectangle> points;
@@ -95,6 +96,9 @@ private:
     
     int panRange;
     int tiltRange;
+	
+	
+	std::vector<std::vector<int>> channels;
 };
 
 #endif /* movingheadController_h */

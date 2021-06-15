@@ -46,6 +46,7 @@ private:
 	ofParameter<vector<fixture>> output;
 	
 	vector<fixture> fixtures;
+	vector<int> channels;
 };
 
 #endif /* strobeLightController_h */

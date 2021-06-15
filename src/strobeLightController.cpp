@@ -10,14 +10,14 @@
 
 void strobeLightController::setup(){
 //    addParameter(lightType.set("Light Type", 0, 0, 1));
-    addInspectorParameter(numElements.set("Num Elements", 6, 1, INT_MAX));
+    addInspectorParameter(numElements.set("Num Elements", 10, 1, INT_MAX));
     addParameter(red.set("Red", {1}, {0}, {1}));
     addParameter(green.set("Green", {1}, {0}, {1}));
     addParameter(blue.set("Blue", {1}, {0}, {1}));
     addParameter(saturate.set("Saturate", {0}, {0}, {1}));
     addParameter(fader.set("Fader", {1}, {0}, {1}));
     addParameter(strobeRate.set("Strobe Rate", {0}, {0}, {1}));
-    addParameter(strobeWidth.set("Pulse Width", {1}, {0}, {1}));
+    //addParameter(strobeWidth.set("Pulse Width", {1}, {0}, {1}));
     addParameter(masterFader.set("Master Fader", 1, 0, 1));
     addParameter(colorOutput.set("Color Output", {0}, {0}, {1}));
 	addParameter(output.set("Output", {}));
@@ -27,6 +27,7 @@ void strobeLightController::setup(){
 	});
 	
 	fixtures.resize(numElements);
+	channels = {289, 277, 265, 253, 241, 295};
 }
 
 void strobeLightController::update(ofEventArgs &e){
@@ -87,8 +88,13 @@ void strobeLightController::update(ofEventArgs &e){
 //		}
 //	}
     
-    
+	vector<fixture> fixtures(numElements);
     for(int i = 0; i < numElements; i++){
+		auto &fix = fixtures[i];
+		fix.startUniverse = 1;
+		fix.startChannel = channels[i];
+		fix.data.resize(6);
+		
         float posSaturate = getValueForPosition(saturate, i);
         float posFader = getValueForPosition(fader, i);
 
@@ -99,6 +105,20 @@ void strobeLightController::update(ofEventArgs &e){
         tempColors[(i*3)] = red_;
         tempColors[(i*3)+1] = green_;
         tempColors[(i*3)+2] = blue_;
+		
+		//Shutter
+		fix.data[0] = ofMap(getValueForPosition(strobeRate, i), 0, 1, 15, 151);
+		
+		//Dimmer
+		fix.data[1] = 255;
+		
+		//Color temp
+		fix.data[2] = 1;
+		
+		//Rgb
+		fix.data[3] = red_ * 255;
+		fix.data[4] = green_ * 255;
+		fix.data[5] = blue_ * 255;
 	}
 //
 ////        switch (lightType) {
@@ -121,6 +141,7 @@ void strobeLightController::update(ofEventArgs &e){
 //    }
 //    dmxOutput = tempOutput;
     colorOutput = tempColors;
+	output = fixtures;
 }
 
 
