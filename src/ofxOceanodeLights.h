@@ -33,7 +33,7 @@ static void registerModels(ofxOceanode &o){
     o.registerModel<panTiltEditor>("Lights");
     o.registerModel<strobeLightController>("Lights");
 	o.registerModel<e131Client>("Lights");
-	
+	o.registerModel<artnodeFixtureSender>("Lights");
 	o.registerType<vector<fixture>>("Fixtures");
 }
 }
