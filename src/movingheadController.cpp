@@ -35,9 +35,9 @@ movingheadController::movingheadController() : ofxOceanodeNodeModelExternalWindo
 //        addParameter(red[i].set("Red " + ofToString(i), {1}, {0}, {1}));
 //        addParameter(green[i].set("Green " + ofToString(i), {1}, {0}, {1}));
 //        addParameter(blue[i].set("Blue " + ofToString(i), {1}, {0}, {1}));
-        addParameter(strobe[i].set("Focus " + ofToString(i), 1, 0, 1));
-        addParameter(gobo[i].set("Gobo " + ofToString(i), 0, 0, 1));
-        addParameter(frost[i].set("Frost " + ofToString(i), 0, 0, 1));
+        addParameter(strobe[i].set("Focus " + ofToString(i), 0, 0, 1));
+        addParameter(gobo[i].set("Gobo " + ofToString(i), {0}, {0}, {1}));
+        addParameter(frost[i].set("Frost " + ofToString(i), {0}, {0}, {1}));
         
         dropdownListeners.push(colorDropdown[i].newListener([this, i](int &ind){
             colorwheel[i] = vector<int>(1, ind);
@@ -153,12 +153,12 @@ void movingheadController::update(ofEventArgs &a){
 //            dmxInfo[index][5] = 0;
 			
 			//Gobo
-			fix.data[3] = ofMap(gobo[i], 0, 1, 0, 71);
+			fix.data[3] = ofMap(getValueAtIndex(gobo[i].get(), j), 0, 1, 0, 71);
             
             //Efects
 
 			//Frost
-			fix.data[7] = frost[i] * 255;
+			fix.data[7] = getValueAtIndex(frost[i].get(), j) * 255;
 			
 			//Focus
 			fix.data[8] = (strobe[i] + focusOffset[index]) * 255;
@@ -166,7 +166,7 @@ void movingheadController::update(ofEventArgs &a){
             //pan
             float panAtIndex = getValueAtIndex(pan[i].get(), j);
             panInfo[index] = ofClamp(panAtIndex, -180, 180);
-            panAtIndex = ofMap(panAtIndex, -panRange/2 + panOffset[index] - 180, panRange/2 + panOffset[index] - 180, 0, 1, true);
+            panAtIndex = ofMap(-panAtIndex, -panRange/2 + panOffset[index] - 180, panRange/2 + panOffset[index] - 180, 0, 1, true);
             dmxInfo[index][9] = panAtIndex;
             dmxInfo[index][10] = panAtIndex*255 - int(panAtIndex*255);
 			fix.data[9] = dmxInfo[index][9]*255;

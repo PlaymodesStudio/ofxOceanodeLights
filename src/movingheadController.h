@@ -69,8 +69,8 @@ private:
 //    vector<ofParameter<vector<float>>> blue;
     vector<ofParameter<int>> colorDropdown;
     vector<ofParameter<float>> strobe;
-    vector<ofParameter<float>> gobo;
-    vector<ofParameter<float>> frost;
+    vector<ofParameter<vector<float>>> gobo;
+    vector<ofParameter<vector<float>>> frost;
     ofParameter<float> masterFader;
     vector<ofParameter<vector<float>>> dmxOutputs;
     ofParameter<vector<float>> panOutput;
