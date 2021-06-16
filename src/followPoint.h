@@ -35,6 +35,8 @@ private:
     
     ofParameter<vector<float>> panL;
     ofParameter<vector<float>> tiltL;
+    ofParameter<vector<float>> panC;
+    ofParameter<vector<float>> tiltC;
     ofParameter<vector<float>> panR;
     ofParameter<vector<float>> tiltR;
     ofParameter<vector<int>> distribution;
@@ -46,6 +48,7 @@ private:
     ofEasyCam cam;
     
     vector<ofNode> movingHeadsL;
+    vector<ofNode> movingHeadsC;
     vector<ofNode> movingHeadsR;
     ofRectangle limits;
     
