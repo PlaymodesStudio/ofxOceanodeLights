@@ -161,7 +161,7 @@ void movingheadController::update(ofEventArgs &a){
 			fix.data.resize(nChannels);
 			
             //color wheel
-            vector<int> dmxColowheelValuesFromIndex{0, 9, 18, 26, 35, 43, 52, 60, 69, 77, 86, 94, 103, 111, 120};
+            vector<int> dmxColowheelValuesFromIndex{0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140};
             dmxInfo[index][7] = dmxColowheelValuesFromIndex.at(getValueAtIndex(colorwheel[i].get(), j))/255.0f;
             //dmxInfo[index][0] = getValueAtIndex(colorwheel[i].get(), j);
 			fix.data[0] = dmxColowheelValuesFromIndex.at(getValueAtIndex(colorwheel[i].get(), j));
@@ -184,6 +184,11 @@ void movingheadController::update(ofEventArgs &a){
 			fix.data[3] = ofMap(getValueAtIndex(gobo[i].get(), j), 0, 1, 0, 71);
             
             //Efects
+			fix.data[4] = 127;
+
+			fix.data[5] = 127;
+
+			fix.data[6] = 0;
 
 			//Frost
 			fix.data[7] = getValueAtIndex(frost[i].get(), j) * 255;
@@ -194,7 +199,7 @@ void movingheadController::update(ofEventArgs &a){
             //pan
             float panAtIndex = getValueAtIndex(pan[i].get(), j);
             panInfo[index] = ofClamp(panAtIndex, -180, 180);
-            panAtIndex = ofMap(-panAtIndex, -panRange/2 + panOffset[index] - 180, panRange/2 + panOffset[index] - 180, 0, 1, true);
+            panAtIndex = ofMap(-panAtIndex, -panRange/2 + panOffset[index], panRange/2 + panOffset[index], 0, 1, true);
             dmxInfo[index][9] = panAtIndex;
             dmxInfo[index][10] = panAtIndex*255 - int(panAtIndex*255);
 			fix.data[9] = dmxInfo[index][9]*255;
@@ -210,7 +215,7 @@ void movingheadController::update(ofEventArgs &a){
 			fix.data[12] = dmxInfo[index][12]*255;
             
             //Function
-            fix.data[13] = 24;
+            fix.data[13] = 0;
             
             //Reset
             if(reset){
