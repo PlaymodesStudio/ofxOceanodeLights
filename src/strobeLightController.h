@@ -29,6 +29,8 @@ public:
     };
     
 private:
+
+	void loadDMXChannels();
 	
 	ofEventListener listener;
     

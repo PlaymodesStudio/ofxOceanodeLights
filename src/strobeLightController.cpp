@@ -24,10 +24,24 @@ void strobeLightController::setup(){
 	
 	listener = numElements.newListener([this](int &i){
 		fixtures.resize(i);
+		loadDMXChannels();
 	});
 	
 	fixtures.resize(numElements);
-	channels = {289, 277, 265, 253, 241, 295};
+	loadDMXChannels();
+}
+
+void strobeLightController::loadDMXChannels() {
+	bool loaded = false;
+	ofJson json = ofLoadJson("StrobeLightDMXChannels_" + ofToString(getNumIdentifier()) + ".json");
+	if (!json.empty()) {
+		if (json["size"].get<int>() == numElements) {
+			channels = json["Channels"].get<vector<int>>();
+			loaded = true;
+		}
+	}if (!loaded) {
+		channels = { 1,1,1,1,1,1 };
+	}
 }
 
 void strobeLightController::update(ofEventArgs &e){
