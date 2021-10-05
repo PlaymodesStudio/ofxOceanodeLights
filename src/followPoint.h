@@ -27,6 +27,7 @@ private:
     
     glm::vec2 calculateAlfa(glm::vec3 position, glm::vec3 lookAT, bool orientMode);
     
+	ofParameter<void> reloadPositions;
     ofParameter<vector<float>> pointsX;
     ofParameter<vector<float>> pointsY;
     ofParameter<vector<float>> pointsZ;

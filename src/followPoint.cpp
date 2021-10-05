@@ -9,6 +9,7 @@
 #include <random>
 
 void followPoint::setup(){
+	addParameter(reloadPositions.set("Reload"));
     addParameter(pointsX.set("Points X", {0}, {-22.5}, {22.5}));
     addParameter(pointsY.set("Points Y", {0}, {-10}, {100}));
     addParameter(pointsZ.set("Points Z", {0}, {-50}, {50}));
@@ -22,15 +23,65 @@ void followPoint::setup(){
     addParameter(panR.set("Pan R", {0}, {-180}, {180}));
     addParameter(tiltR.set("Tilt R", {0}, {-180}, {180}));
     addParameter(distribution.set("Distribution", {0}, {0}, {9}));
+
+	ofJson json = ofLoadJson("FollowPointPositions_" + ofToString(getNumIdentifier()) + ".json");
+
+	movingHeadsL.resize(5);
+	movingHeadsR.resize(5);
+	movingHeadsC.resize(5);
+	if (!json.empty()) {
+		movingHeadsL[0].setPosition(json["L"]["0"]["x"], json["L"]["0"]["y"], json["L"]["0"]["z"]);
+		movingHeadsL[1].setPosition(json["L"]["1"]["x"], json["L"]["1"]["y"], json["L"]["1"]["z"]);
+		movingHeadsL[2].setPosition(json["L"]["2"]["x"], json["L"]["2"]["y"], json["L"]["2"]["z"]);
+		movingHeadsL[3].setPosition(json["L"]["3"]["x"], json["L"]["3"]["y"], json["L"]["3"]["z"]);
+		movingHeadsL[4].setPosition(json["L"]["4"]["x"], json["L"]["4"]["y"], json["L"]["4"]["z"]);
+
+		movingHeadsR[0].setPosition(json["R"]["0"]["x"], json["R"]["0"]["y"], json["R"]["0"]["z"]);
+		movingHeadsR[1].setPosition(json["R"]["1"]["x"], json["R"]["1"]["y"], json["R"]["1"]["z"]);
+		movingHeadsR[2].setPosition(json["R"]["2"]["x"], json["R"]["2"]["y"], json["R"]["2"]["z"]);
+		movingHeadsR[3].setPosition(json["R"]["3"]["x"], json["R"]["3"]["y"], json["R"]["3"]["z"]);
+		movingHeadsR[4].setPosition(json["R"]["4"]["x"], json["R"]["4"]["y"], json["R"]["4"]["z"]);
+
+		movingHeadsC[0].setPosition(json["C"]["0"]["z"], json["C"]["0"]["y"], json["C"]["0"]["x"]);
+		movingHeadsC[1].setPosition(json["C"]["1"]["z"], json["C"]["1"]["y"], json["C"]["1"]["x"]);
+		movingHeadsC[2].setPosition(json["C"]["2"]["z"], json["C"]["2"]["y"], json["C"]["2"]["x"]);
+		movingHeadsC[3].setPosition(json["C"]["3"]["z"], json["C"]["3"]["y"], json["C"]["3"]["x"]);
+		movingHeadsC[4].setPosition(json["C"]["4"]["z"], json["C"]["4"]["y"], json["C"]["4"]["x"]);
+	}
+	else {
+		float height = 6.5;
+		float x = 6.75; //12 entre un i altre o mes
+		movingHeadsL[0].setPosition(-x, height, -1.48 * 4);
+		movingHeadsL[1].setPosition(-x, height, -1.48 * 3);
+		movingHeadsL[2].setPosition(-x, height, -1.48 * 2);
+		movingHeadsL[3].setPosition(-x, height, -1.48);
+		movingHeadsL[4].setPosition(-x, height, 0);
+
+		movingHeadsR[0].setPosition(x, height, 0);
+		movingHeadsR[1].setPosition(x, height, -1.48 * 1);
+		movingHeadsR[2].setPosition(x, height, -1.48 * 2);
+		movingHeadsR[3].setPosition(x, height, -1.48 * 3);
+		movingHeadsR[4].setPosition(x, height, -1.48 * 4);
+
+		height = 6.7;
+		float distanceZ = -12.3;
+		float distanceBetween = 0.70;
+		float offset = -0.04;
+
+		//	movingHeadsC[0].setPosition(-0.74*2, height, distanceZ);
+		//	movingHeadsC[1].setPosition(-0.74, height, distanceZ);
+		//	movingHeadsC[2].setPosition(0, height, distanceZ);
+		//	movingHeadsC[3].setPosition(0.74, height, distanceZ);
+		//	movingHeadsC[4].setPosition(0.74*2, height, distanceZ);
+		movingHeadsC[0].setPosition(distanceZ, height, offset - distanceBetween * 2);
+		movingHeadsC[1].setPosition(distanceZ, height, offset - distanceBetween * 1);
+		movingHeadsC[2].setPosition(distanceZ, height, offset + distanceBetween * 0);
+		movingHeadsC[3].setPosition(distanceZ, height, offset + distanceBetween * 1);
+		movingHeadsC[4].setPosition(distanceZ, height, offset + distanceBetween * 2);
+	}
     
-    movingHeadsL.resize(5);
-    float height = 6.5;
-    float x = 6.75; //12 entre un i altre o mes
-    movingHeadsL[0].setPosition(-x, height, -1.48*4);
-    movingHeadsL[1].setPosition(-x, height, -1.48*3);
-    movingHeadsL[2].setPosition(-x, height, -1.48*2);
-    movingHeadsL[3].setPosition(-x, height, -1.48);
-    movingHeadsL[4].setPosition(-x, height, 0);
+   
+   
     for(int i = 0; i < movingHeadsL.size(); i++){
         //movingHeadsL[i].setPosition(movingHeadsL[i].getPosition() - glm::vec3(21.04, 0, 20.88));
 //		movingHeadsL[i].rotateDeg(180, glm::vec3(1, 0, 0));
@@ -44,12 +95,30 @@ void followPoint::setup(){
         lastRandomizePoints = b;
 	}));
 	
-	movingHeadsR.resize(5);
-	movingHeadsR[0].setPosition(x, height, 0);
-	movingHeadsR[1].setPosition(x, height, -1.48*1);
-	movingHeadsR[2].setPosition(x, height, -1.48*2);
-	movingHeadsR[3].setPosition(x, height, -1.48*3);
-	movingHeadsR[4].setPosition(x, height, -1.48*4);
+	listeners.push(reloadPositions.newListener([this]() {
+		ofJson json = ofLoadJson("FollowPointPositions_" + ofToString(getNumIdentifier()) + ".json");
+
+		if (!json.empty()) {
+			movingHeadsL[0].setPosition(json["L"]["0"]["x"], json["L"]["0"]["y"], json["L"]["0"]["z"]);
+			movingHeadsL[1].setPosition(json["L"]["1"]["x"], json["L"]["1"]["y"], json["L"]["1"]["z"]);
+			movingHeadsL[2].setPosition(json["L"]["2"]["x"], json["L"]["2"]["y"], json["L"]["2"]["z"]);
+			movingHeadsL[3].setPosition(json["L"]["3"]["x"], json["L"]["3"]["y"], json["L"]["3"]["z"]);
+			movingHeadsL[4].setPosition(json["L"]["4"]["x"], json["L"]["4"]["y"], json["L"]["4"]["z"]);
+
+			movingHeadsR[0].setPosition(json["R"]["0"]["x"], json["R"]["0"]["y"], json["R"]["0"]["z"]);
+			movingHeadsR[1].setPosition(json["R"]["1"]["x"], json["R"]["1"]["y"], json["R"]["1"]["z"]);
+			movingHeadsR[2].setPosition(json["R"]["2"]["x"], json["R"]["2"]["y"], json["R"]["2"]["z"]);
+			movingHeadsR[3].setPosition(json["R"]["3"]["x"], json["R"]["3"]["y"], json["R"]["3"]["z"]);
+			movingHeadsR[4].setPosition(json["R"]["4"]["x"], json["R"]["4"]["y"], json["R"]["4"]["z"]);
+
+			movingHeadsC[0].setPosition(json["C"]["0"]["z"], json["C"]["0"]["y"], json["C"]["0"]["x"]);
+			movingHeadsC[1].setPosition(json["C"]["1"]["z"], json["C"]["1"]["y"], json["C"]["1"]["x"]);
+			movingHeadsC[2].setPosition(json["C"]["2"]["z"], json["C"]["2"]["y"], json["C"]["2"]["x"]);
+			movingHeadsC[3].setPosition(json["C"]["3"]["z"], json["C"]["3"]["y"], json["C"]["3"]["x"]);
+			movingHeadsC[4].setPosition(json["C"]["4"]["z"], json["C"]["4"]["y"], json["C"]["4"]["x"]);
+		}
+	}));
+	
 	
 	for(int i = 0; i < movingHeadsL.size(); i++){
 		//movingHeadsR[i].setPosition(movingHeadsR[i].getPosition() - glm::vec3(21.04, 0, 20.88));
@@ -58,24 +127,10 @@ void followPoint::setup(){
 		movingHeadsR[i].setScale(.1);
 	}
 	
-	height = 6.7;
-	float distanceZ = -12.4;
-	float distanceBetween = 0.87;
-	//	height = 7;
-	//	float distanceZ = -12.0;
-	//	float distanceBetween = 0.87;
-	float offset = -0.04;
-	movingHeadsC.resize(5);
-	//	movingHeadsC[0].setPosition(-0.74*2, height, distanceZ);
-	//	movingHeadsC[1].setPosition(-0.74, height, distanceZ);
-	//	movingHeadsC[2].setPosition(0, height, distanceZ);
-	//	movingHeadsC[3].setPosition(0.74, height, distanceZ);
-	//	movingHeadsC[4].setPosition(0.74*2, height, distanceZ);
-	movingHeadsC[0].setPosition(distanceZ, height, offset - distanceBetween*2);
-	movingHeadsC[1].setPosition(distanceZ, height, offset - distanceBetween*1);
-	movingHeadsC[2].setPosition(distanceZ, height, offset + distanceBetween*0);
-	movingHeadsC[3].setPosition(distanceZ, height, offset + distanceBetween*1);
-	movingHeadsC[4].setPosition(distanceZ, height, offset + distanceBetween*2);
+	//height = 6.7;
+	//float distanceZ = -12.4;
+	//float distanceBetween = 0.87;
+	
 	
 	for(int i = 0; i < movingHeadsC.size(); i++){
 		//movingHeadsR[i].setPosition(movingHeadsR[i].getPosition() - glm::vec3(21.04, 0, 20.88));
