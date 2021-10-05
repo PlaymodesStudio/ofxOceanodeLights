@@ -47,6 +47,7 @@ movingheadController::movingheadController() : ofxOceanodeNodeModelExternalWindo
             totalSize = 0;
             for(auto s : size) totalSize += s;
             loadCalibration();
+			loadDMXChannels();
             recalculateSliders();
         }));
     }
@@ -73,9 +74,34 @@ movingheadController::movingheadController() : ofxOceanodeNodeModelExternalWindo
     tiltRange = 247;
 
 	channels.resize(3);
-	channels[0] = {225, 209, 193, 177, 161};
-	channels[1] = {145, 129, 113, 97, 81};
-	channels[2] = {65, 49, 33, 17, 1};
+	channels[0] = { 1,1,1,1,1 };
+	channels[1] = { 1,1,1,1,1 };
+	channels[2] = { 1,1,1,1,1 };
+}
+
+void movingheadController::setup() {
+	if (getNumIdentifier() != -1) {
+		loadCalibration();
+		loadDMXChannels();
+	}
+}
+
+void movingheadController::loadDMXChannels() {
+	bool loaded = false;
+	ofJson json = ofLoadJson("MovingHeadDMXChannels_" + ofToString(getNumIdentifier()) + ".json");
+	if (!json.empty()) {
+		if (json["size"].get<int>() == numGroups) {
+			for (int i = 0; i < numGroups; i++) {
+				channels[i] = json["Channels_" + ofToString(i)].get<vector<int>>();
+			}
+			loaded = true;
+		}
+	}if (!loaded) {
+		channels.resize(3);
+		channels[0] = { 1,1,1,1,1 };
+		channels[1] = { 1,1,1,1,1 };
+		channels[2] = { 1,1,1,1,1 };
+	}
 }
 
 void movingheadController::loadCalibration(){
@@ -86,6 +112,8 @@ void movingheadController::loadCalibration(){
             panOffset = json["panOffset"].get<vector<float>>();
             tiltOffset = json["tiltOffset"].get<vector<float>>();
 			focusOffset = json["focusOffset"].get<vector<float>>();
+			panRange = json["panRange"];
+			tiltRange = json["tiltRange"];
             loaded = true;
         }
     }if(!loaded){
@@ -96,7 +124,7 @@ void movingheadController::loadCalibration(){
 }
 
 void movingheadController::saveCalibration(){
-    ofJson json;
+    ofJson json = ofLoadJson("MovingHeadCalibration_" + ofToString(getNumIdentifier()) + ".json");
     json["size"] = totalSize;
     json["panOffset"] = panOffset;
     json["tiltOffset"] = tiltOffset;

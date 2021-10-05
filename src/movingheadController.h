@@ -20,11 +20,7 @@ public:
          }
     };
     
-    void setup() override{
-        if(getNumIdentifier() != -1){
-            loadCalibration();
-        }
-    }
+	void setup() override;
     
     void update(ofEventArgs &a) override;
     
@@ -32,6 +28,8 @@ private:
     
     void saveCalibration();
     void loadCalibration();
+
+	void loadDMXChannels();
     
     void drawInExternalWindow(ofEventArgs &e) override;
     void windowResized(ofResizeEventArgs &a) override;
