@@ -11,7 +11,7 @@
 struct fixture{
 	int startChannel;
 	int startUniverse;
-	vector<u_char> data;
+	vector<unsigned char> data;
 };
 
 #endif /* fixture_h */
