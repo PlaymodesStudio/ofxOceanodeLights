@@ -32,34 +32,90 @@ void e131Client::update(ofEventArgs &a){
     client.update();
 }
 
+void artnodeFixtureSender::setup() {
 
-void artnodeFixtureSender::setup(){
-	
-	client.setup("2.0.0.1", "255.0.0.0");
-    
-    int numInputs = 3;
-	inputs.resize(numInputs);
-	
-	for(int i = 0; i < numInputs; i++){
-		addParameter(inputs[i].set("Input " + ofToString(i), {}));
-	}
+    ofJson json = ofLoadJson("ArtnetConfig.json");
+
+    addParameter(ip.set("Dest IP", "10.0.0.10"), ofxOceanodeParameterFlags_DisableSavePreset);
+    string interface = "10.0.0.1";
+    string interfaceMask = "255.0.0.0";
+    if (json.count("interface") == 1) interface = json["interface"].get<string>();
+    if (json.count("interfaceMask") == 1) interfaceMask = json["interfaceMask"].get<string>();
+    if (json.count("destIP") == 1) ip = json["destIP"];
+
+    client.setup(interface, interfaceMask);
+
+    int numInputs = 4;
+    inputs.resize(numInputs);
+
+    for (int i = 0; i < numInputs; i++) {
+        addParameter(inputs[i].set("Input " + ofToString(i), {}));
+    }
 }
 
-void artnodeFixtureSender::update(ofEventArgs &a){
-	std::map<int, ArtDmx*> universes;
-	for(auto &in : inputs){
-		for(auto &fix : in.get()){
-			auto data = fix.data;
-			if(universes.count(fix.startUniverse) == 0){
-				universes[fix.startUniverse] = client.createArtDmx(0, 0, 1);
-			}
-			for(int i = 0; i < data.size(); i++){
-				universes[fix.startUniverse]->Data[fix.startChannel-1 + i] = data[i];
-			}
-		}
-	}
-	for(auto &uni : universes){
-		client.sendUniCast("2.0.0.10", 6454, (char*)uni.second, uni.second->getSize());
-	}
-    client.update();
+void artnodeFixtureSender::update(ofEventArgs &a) {
+    ArtDmx* universe = client.createArtDmx(0, 0, 0);
+    map<int, vector<char>> universesData;
+    //map<int, ArtDmx*> universes;
+    int currentUniv = 0;
+    for (auto &in : inputs) {
+        for (auto &fix : in.get()) {
+            auto data = fix.data;
+            int startChan = fix.startChannel;
+            int startUniv = fix.startUniverse;
+            while (data.size() != 0) {
+                int dataCopySize = std::min(511 - startChan, (int)data.size());
+                vector<u_char> datacopy(data.begin(), data.begin() + dataCopySize);
+                //e131client.setChannels(startChan, datacopy.data(), datacopy.size(), startUniv);
+                
+                if (universesData.count(startUniv) == 0) {
+                    //ofLog() << "createUniverse " << startUniv;
+                    //universes[startUniv] = client.createArtDmx(0, startUniv >> 4, startUniv & 0x0f);
+                    universesData[startUniv].resize(510);
+                }
+                
+                /*if (currentUniv != startUniv) {
+                    client.sendUniCast(ip, 6454, (char*)universe, universe->getSize());
+                    universe = client.createArtDmx(0, startUniv >> 4, startUniv & 0x0f);
+                }*/
+
+                for (int i = 0; i < datacopy.size(); i++) {
+                    //universes[startUniv]->Data[startChan - 1 + i] = datacopy[i];
+                    universesData[startUniv][startChan - 1 + i] = datacopy[i];
+                }
+                //client.sendUniCast(ip, 6454, (char*)universes[startUniv], universes[startUniv]->getSize());
+                
+
+                /*for (int i = 0; i < datacopy.size(); i++) {
+                    universe->Data[startChan - 1 + i] = datacopy[i];
+                }*/
+
+                data = vector<u_char>(data.begin() + dataCopySize, data.end());
+                startChan = 1;
+                startUniv++;
+            }
+
+
+
+
+
+            //auto data = fix.data;
+            //if (universes.count(fix.startUniverse) == 0) {
+            //    universes[fix.startUniverse] = client.createArtDmx(0, 0, 1);
+            //}
+            //for (int i = 0; i < data.size(); i++) {
+            //    universes[fix.startUniverse]->Data[fix.startChannel - 1 + i] = data[i];
+            //}
+        }
+    }
+    
+    for (auto &uni : universesData) {
+        auto artdmx = client.createArtDmx(0, uni.first >> 4, uni.first & 0x0f);
+        for (int i = 0; i < uni.second.size(); i++) {
+            //universes[startUniv]->Data[startChan - 1 + i] = datacopy[i];
+            artdmx->Data[i] = uni.second[i];
+        }
+        client.sendUniCast(ip, 6454, (char*)artdmx, artdmx->getSize());
+    }
+    //client.update();
 }

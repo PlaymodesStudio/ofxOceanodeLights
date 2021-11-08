@@ -47,6 +47,7 @@ private:
 	ofEventListeners eventListeners;
 
 	ofParameter<string> ip;
+    ofParameter<string> destIp;
 	vector<ofParameter<vector<fixture>>> inputs;
 
 	ofxArtNode client;
