@@ -42,13 +42,14 @@ private:
     ofParameter<vector<float>> saturate;
     ofParameter<vector<float>> fader;
     ofParameter<float> masterFader;
-    ofParameter<vector<float>> strobeRate;
-    ofParameter<vector<float>> strobeWidth;
+    ofParameter<vector<int>> strobeRate;
+    ofParameter<vector<int>> strobeWidth;
     ofParameter<vector<float>> colorOutput;
 	ofParameter<vector<fixture>> output;
 	
 	vector<fixture> fixtures;
 	vector<int> channels;
+    vector<int> universes;
 };
 
 #endif /* strobeLightController_h */
