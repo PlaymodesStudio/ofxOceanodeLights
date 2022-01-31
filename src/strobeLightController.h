@@ -35,7 +35,7 @@ private:
 	ofEventListener listener;
     
     ofParameter<int> numElements;
-//    ofParameter<int> lightType;
+    ofParameter<int> lightType;
     ofParameter<vector<float>> red;
     ofParameter<vector<float>> green;
     ofParameter<vector<float>> blue;

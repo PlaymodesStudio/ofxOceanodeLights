@@ -40,6 +40,12 @@ public:
 
 	void setup() override;
 	void update(ofEventArgs &a) override;
+    
+    void presetRecallAfterSettingParameters(ofJson &json) override{
+        if(configip != "0.0.0.0"){
+            ip = configip;
+        }
+    }
 
 private:
 	void inputListener(int index);
@@ -49,6 +55,8 @@ private:
 	ofParameter<string> ip;
     ofParameter<string> destIp;
 	vector<ofParameter<vector<fixture>>> inputs;
+    
+    string configip;
 
 	ofxArtNode client;
 };

@@ -36,12 +36,16 @@ void artnodeFixtureSender::setup() {
 
     ofJson json = ofLoadJson("ArtnetConfig.json");
 
-    addParameter(ip.set("Dest IP", "10.0.0.10"), ofxOceanodeParameterFlags_DisableSavePreset);
+    addParameter(ip.set("Dest IP", "2.0.0.10"));
     string interface = "10.0.0.1";
     string interfaceMask = "255.0.0.0";
     if (json.count("interface") == 1) interface = json["interface"].get<string>();
     if (json.count("interfaceMask") == 1) interfaceMask = json["interfaceMask"].get<string>();
-    if (json.count("destIP") == 1) ip = json["destIP"];
+    if (json.count("destIP") == 1) configip = json["destIP"];
+    
+    if(configip != "0.0.0.0"){
+        ip = configip;
+    }
 
     client.setup(interface, interfaceMask);
 

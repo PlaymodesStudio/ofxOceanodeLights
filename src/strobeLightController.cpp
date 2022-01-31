@@ -9,15 +9,15 @@
 #define NUM_OUTPUTS 6
 
 void strobeLightController::setup(){
-//    addParameter(lightType.set("Light Type", 0, 0, 1));
-    addInspectorParameter(numElements.set("Num Elements", 32, 1, INT_MAX));
+    addParameter(lightType.set("Type", 0, 0, 1));
+    addInspectorParameter(numElements.set("Num Elements", 2, 1, INT_MAX));
     addParameter(red.set("Red", {1}, {0}, {1}));
     addParameter(green.set("Green", {1}, {0}, {1}));
     addParameter(blue.set("Blue", {1}, {0}, {1}));
     addParameter(saturate.set("Saturate", {0}, {0}, {1}));
     addParameter(fader.set("Fader", {1}, {0}, {1}));
-    addParameter(strobeRate.set("CTC", {0}, {0}, {255}));
-    addParameter(strobeWidth.set("Shutter", {9}, {0}, {255}));
+    addParameter(strobeRate.set("Strobe", {0}, {0}, {255}));
+    addParameter(strobeWidth.set("Effect", {0}, {0}, {255}));
     addParameter(masterFader.set("Master Fader", 1, 0, 1));
     addParameter(colorOutput.set("Color Output", {0}, {0}, {1}));
 	addParameter(output.set("Output", {}));
@@ -112,45 +112,57 @@ void strobeLightController::update(ofEventArgs &e){
 	vector<fixture> fixtures(numElements);
     for(int i = 0; i < numElements; i++){
 		auto &fix = fixtures[i];
-		fix.startUniverse = getNumIdentifier();
+        fix.startUniverse = 1;//getNumIdentifier();
 		fix.startChannel = channels[i];
-		fix.data.resize(10);
+        fix.data.resize(7);
         
-        //Shutter
-        fix.data[0] = getValueForPositionInt(strobeWidth, i);
-        
-        //From ofxFixture::setDmxDimmer16bit()
-//        int dim = dimmer * 65535;
-//        int dim0 = (dim >> 8) & 0x00ff;
-//        int dim1 =  dim       & 0x00ff;
         //Dimmer
-        int dimmerAtIndex = getValueForPosition(fader, i) * masterFader * 65535;
-        fix.data[1] = (dimmerAtIndex >> 8) & 0x00ff;
-        fix.data[2] =  dimmerAtIndex       & 0x00ff;
+        int dimmerAtIndex = getValueForPosition(fader, i) * masterFader * 255;
+        fix.data[0] = dimmerAtIndex;
         
-        //CTC
-        fix.data[3] = getValueForPositionInt(strobeRate, i);
-        
-        
-		
         float posSaturate = getValueForPosition(saturate, i);
-
-        int red_ = ((getValueForPosition(red, i) * (1-posSaturate)) + (1 * posSaturate)) * 65535;
-        int green_ = ((getValueForPosition(green, i) * (1-posSaturate)) + (1 * posSaturate)) * 65535;
-        int blue_ = ((getValueForPosition(blue, i) * (1-posSaturate)) + (1 * posSaturate)) * 65535;
         
-        //Colors
-        fix.data[4] = (red_ >> 8) & 0x00ff;
-        fix.data[5] =  red_       & 0x00ff;
-        fix.data[6] = (green_ >> 8) & 0x00ff;
-        fix.data[7] =  green_       & 0x00ff;
-        fix.data[8] = (blue_ >> 8) & 0x00ff;
-        fix.data[9] =  blue_       & 0x00ff;
-//
-//        tempColors[(i*3)] = red_;
-//        tempColors[(i*3)+1] = green_;
-//        tempColors[(i*3)+2] = blue_;
-		
+        float red_ = ((getValueForPosition(red, i) * (1-posSaturate)) + (1 * posSaturate));
+        float green_ = ((getValueForPosition(green, i) * (1-posSaturate)) + (1 * posSaturate));
+        float blue_ = ((getValueForPosition(blue, i) * (1-posSaturate)) + (1 * posSaturate));
+        
+        switch(lightType){
+            case 0:{
+                //Colors
+                fix.data[1] = red_ * 255;
+                fix.data[2] = green_ * 255;
+                fix.data[3] = blue_ * 255;
+                
+                //Effect
+                fix.data[4] = getValueForPositionInt(strobeWidth, i);
+                
+                //Speed efects
+                fix.data[5] = getValueForPositionInt(strobeRate, i);
+                
+                //Strobe speed
+                fix.data[6] = getValueForPositionInt(strobeRate, i);
+                break;
+            }
+            case 1:{
+                float white = 0;
+                
+                rgbToRgbw(red_, green_, blue_, white, false);
+                
+                //Colors
+                fix.data[1] = red_ * 255;
+                fix.data[2] = green_ * 255;
+                fix.data[3] = blue_ * 255;
+                fix.data[4] = white * 255;
+                
+                //Width
+                fix.data[5] = getValueForPositionInt(strobeWidth, i);
+                
+                //Strobe speed
+                fix.data[6] = getValueForPositionInt(strobeRate, i);
+                break;
+            }
+        }
+        
 		//Shutter
 		//fix.data[0] = ofMap(getValueForPosition(strobeRate, i), 0, 1, 15, 151);
 		
@@ -170,26 +182,6 @@ void strobeLightController::update(ofEventArgs &e){
 //		fix.data[3] = white * 255;
         
 	}
-//
-////        switch (lightType) {
-////            case 0:
-//                tempOutput[(i*elementSize)] = red_;
-//                tempOutput[(i*elementSize)+1] = green_;
-//                tempOutput[(i*elementSize)+2] = blue_;
-//                tempOutput[(i*elementSize)+3] = 0;
-////                break;
-////            case 1:
-////                tempOutput[(i*elementSize)] = red_;
-////                tempOutput[(i*elementSize)+1] = green_;
-////                tempOutput[(i*elementSize)+2] = blue_;
-////                tempOutput[(i*elementSize)+3] = 0;
-////                break;
-////
-////            default:
-////                break;
-////        }
-//    }
-//    dmxOutput = tempOutput;
     colorOutput = tempColors;
 	output = fixtures;
 }
