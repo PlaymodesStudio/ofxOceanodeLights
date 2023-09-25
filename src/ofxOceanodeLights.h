@@ -19,6 +19,7 @@
 #include "strobeLightController.h"
 #include "e131Client.h"
 #include "fixture.h"
+#include "customFixture.h"
 
 #include "ofxOceanode.h"
 
@@ -35,6 +36,13 @@ static void registerModels(ofxOceanode &o){
 	o.registerModel<e131Client>("Lights");
 	o.registerModel<artnodeFixtureSender>("Lights");
 	o.registerType<vector<fixture>>("Fixtures");
+    
+    ofJson json = ofLoadJson("customFixtures.json");
+    for(ofJson::iterator it = json.begin(); it != json.end(); it++){
+        o.registerModel<customFixture>("Lights",
+                                    it.key(),
+                                    it.value());
+    }
 }
 }
 
