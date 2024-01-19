@@ -86,6 +86,10 @@ public:
         output = fixtures;
     }
     
+    void loadBeforeConnections(ofJson &json){
+        deserializeParameter(json, numElements);
+    }
+    
 private:
     string additionalName;
     string configuration;
