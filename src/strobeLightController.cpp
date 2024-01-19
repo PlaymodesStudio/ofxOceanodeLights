@@ -200,8 +200,8 @@ void strobeLightController::rgbToRgbw(float &r, float &g, float &b, float &w, bo
     float hB = b * multiplier;
     
     //This calculates the Whiteness (not strictly speaking Luminance) of the color
-    float M = max(hR, max(hG, hB));
-    float m = min(hR, min(hG, hB));
+    float M = std::max(hR, std::max(hG, hB));
+    float m = std::min(hR, std::min(hG, hB));
     float Luminance = ((M + m) / 2.0f - 0.5f) * (2.0f) / multiplier;
     
     if(clamp){
