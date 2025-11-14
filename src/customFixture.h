@@ -19,15 +19,47 @@ public:
     
     void setup(){
         vector<string> splittedConfig = ofSplitString(configuration, ", ");
-        channelsParams.resize(splittedConfig.size());
         for(int i = 0; i < splittedConfig.size(); i++){
             vector<string> ss = ofSplitString(splittedConfig[i], ":");
+            float defVal = ofToFloat(ss[1]);
             if(ofStringTimesInString(ss[0], "//16") == 1){
                 ofStringReplace(ss[0], "//16", "");
-                addParameter(channelsParams[i].set(ss[0], vector<int>(1, ofToInt(ss[1])), {0}, {65535}));
+                if(ss.size() == 4){ //Parameter with custom min max
+                    float minVal = ofToFloat(ss[2]);
+                    float maxVal = ofToFloat(ss[3]);
+                    if(abs(maxVal - minVal) == 65535){
+                        std::shared_ptr<ofParameter<vector<int>>> temp(new ofParameter<vector<int>>(ss[0], vector<int>(1, defVal), vector<int>(1, minVal), vector<int>(1, maxVal)));
+                        addParameter(temp);
+                        channelsParams.emplace_back(true, temp);
+                    }else{
+                        std::shared_ptr<ofParameter<vector<float>>> temp(new ofParameter<vector<float>>(ss[0], vector<float>(1, defVal), vector<float>(1, minVal), vector<float>(1, maxVal)));
+                        addParameter(temp);
+                        channelsParams.emplace_back(true, temp);
+                    }
+                }else if(ss.size() == 2){ //Standard Parmaeter
+                    std::shared_ptr<ofParameter<vector<int>>> temp(new ofParameter<vector<int>>(ss[0], vector<int>(1, defVal), {0}, {65535}));
+                    addParameter(temp);
+                    channelsParams.emplace_back(true, temp);
+                }
                 numChannels += 2;
             }else{
-                addParameter(channelsParams[i].set(ss[0], vector<int>(1, ofToInt(ss[1])), {0}, {255}));
+                if(ss.size() == 4){ //Parameter with custom min max
+                    float minVal = ofToFloat(ss[2]);
+                    float maxVal = ofToFloat(ss[3]);
+                    if(abs(maxVal - minVal) == 255){
+                        std::shared_ptr<ofParameter<vector<int>>> temp(new ofParameter<vector<int>>(ss[0], vector<int>(1, defVal), vector<int>(1, minVal), vector<int>(1, maxVal)));
+                        addParameter(temp);
+                        channelsParams.emplace_back(false, temp);
+                    }else{
+                        std::shared_ptr<ofParameter<vector<float>>> temp(new ofParameter<vector<float>>(ss[0], vector<float>(1, defVal), vector<float>(1, minVal), vector<float>(1, maxVal)));
+                        addParameter(temp);
+                        channelsParams.emplace_back(false, temp);
+                    }
+                }else if(ss.size() == 2){ //Standard Parameter
+                    std::shared_ptr<ofParameter<vector<int>>> temp(new ofParameter<vector<int>>(ss[0], vector<int>(1, defVal), {0}, {255}));
+                    addParameter(temp);
+                    channelsParams.emplace_back(false, temp);
+                }
                 numChannels += 1;
             }
         }
@@ -41,9 +73,6 @@ public:
                 int oldSize = channels.size();
                 channels.resize(i);
 
-                for(int j = 0; j < oldSize; j++){
-                    channels[j] = 1 + (numChannels * j);
-                }
                 if(oldSize > i){
                     for(int j = oldSize-1; j >= i; j--){
                         removeInspectorParameter("Chan Fix " + ofToString(j));
@@ -70,15 +99,36 @@ public:
             int currentChannelToWrite = 0;
             for(int j = 0; j < channelsParams.size(); j++){
                 int indexToGet = 0;
-                if(i < channelsParams[j]->size()){
+                vector<float> values;
+                float min = 0;
+                float max = 0;
+                bool isHiRes = channelsParams[j].first;
+                if(typeid(*channelsParams[j].second.get()) == typeid(ofParameter<vector<float>>)){
+                    auto param = channelsParams[j].second->cast<vector<float>>();
+                    values = param;
+                    min = param.getMin()[0];
+                    max = param.getMax()[0];
+                }else if(typeid(*channelsParams[j].second.get()) == typeid(ofParameter<vector<int>>)){
+                    auto param = channelsParams[j].second->cast<vector<int>>();
+                    values = vector<float>(param->begin(), param->end());
+                    min = param.getMin()[0];
+                    max = param.getMax()[0];
+                }else{
+                    ofLog() << "Parameter type error";
+                }
+                
+                if(i < values.size()){
                     indexToGet = i;
                 }
-                if(channelsParams[j].getMax()[0] == 65535){ //Is a coarse - fine parameter;
-                    fix.data[currentChannelToWrite] = (channelsParams[j]->at(indexToGet) >> 8) & 0xFF;  // Shift right 8 bits and mask
-                    fix.data[currentChannelToWrite + 1] = channelsParams[j]->at(indexToGet) & 0xFF;  // Mask to get the fine 8-bit value
+                
+                if(isHiRes){ //True means a hires parameter
+                    int mappedvalue = ofMap(values[indexToGet], min, max, 0, 65535);
+                    fix.data[currentChannelToWrite] = (mappedvalue >> 8) & 0xFF;  // Shift right 8 bits and mask
+                    fix.data[currentChannelToWrite + 1] = mappedvalue & 0xFF;  // Mask to get the fine 8-bit value
                     currentChannelToWrite += 2;
                 }else{
-                    fix.data[currentChannelToWrite] = channelsParams[j]->at(indexToGet);
+                    int mappedvalue = ofMap(values[indexToGet], min, max, 0, 255);
+                    fix.data[currentChannelToWrite] = mappedvalue;
                     currentChannelToWrite += 1;
                 }
             }
@@ -98,7 +148,7 @@ private:
     ofParameter<int> numElements;
     ofParameter<int> universe;
     vector<ofParameter<int>> channels;
-    vector<ofParameter<vector<int>>> channelsParams;
+    vector<std::pair<bool, shared_ptr<ofAbstractParameter>>> channelsParams;
     ofParameter<vector<fixture>> output;
     
     int numChannels;
