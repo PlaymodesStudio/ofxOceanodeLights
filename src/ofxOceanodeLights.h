@@ -14,7 +14,6 @@
 #include "followIndexsToMovingHeads.h"
 #include "followPoint.h"
 #include "movingheadController.h"
-#include "oscSenders.h"
 #include "pantiltEditor.h"
 #include "strobeLightController.h"
 #include "e131Client.h"
@@ -30,7 +29,6 @@ static void registerModels(ofxOceanode &o){
     o.registerModel<followIndexsToMovingHeads>("Lights");
     o.registerModel<followPoint>("Lights");
     o.registerModel<movingheadController>("Lights");
-    o.registerModel<oscSenders>("Lights");
     o.registerModel<panTiltEditor>("Lights");
     o.registerModel<strobeLightController>("Lights");
 	o.registerModel<artnodeFixtureSender>("Lights");
