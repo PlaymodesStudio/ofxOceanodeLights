@@ -9,29 +9,29 @@
 #define e131Client_h
 
 #include "ofxOceanodeNodeModel.h"
-#include "ofxE131Client.h"
+//#include "ofxE131Client.h"
 #include "ofxArtNode.h"
 #include "fixture.h"
 
-class e131Client : public ofxOceanodeNodeModel{
-public:
-	e131Client() : ofxOceanodeNodeModel("E131 Sender"){};
-	~e131Client(){};
-    
-    void setup() override;
-    void update(ofEventArgs &a) override;
-    
-private:
-    void inputListener(int index);
-    
-    ofEventListeners eventListeners;
-    
-    ofParameter<string> ip;
-	vector<ofParameter<vector<fixture>>> inputs;
-	
-	ofxE131Client client;
-	
-};
+//class e131Client : public ofxOceanodeNodeModel{
+//public:
+//	e131Client() : ofxOceanodeNodeModel("E131 Sender"){};
+//	~e131Client(){};
+//    
+//    void setup() override;
+//    void update(ofEventArgs &a) override;
+//    
+//private:
+//    void inputListener(int index);
+//    
+//    ofEventListeners eventListeners;
+//    
+//    ofParameter<string> ip;
+//	vector<ofParameter<vector<fixture>>> inputs;
+//	
+//	ofxE131Client client;
+//	
+//};
 
 class artnodeFixtureSender : public ofxOceanodeNodeModel{
 public:
