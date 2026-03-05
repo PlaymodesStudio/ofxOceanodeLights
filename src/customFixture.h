@@ -66,7 +66,7 @@ public:
         addParameter(output.set("Output", {}));
         
         addInspectorParameter(numElements.set("Num Elements", 1, 1, INT_MAX));
-        addInspectorParameter(universe.set("Universe", 1, 1, 65535));
+        addInspectorParameter(universe.set("Universe", 0, 0, 65535));
         
         listener = numElements.newListener([this](int &i){
             if(channels.size() != i){
