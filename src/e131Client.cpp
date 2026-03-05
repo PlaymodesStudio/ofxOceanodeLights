@@ -69,7 +69,6 @@ void artnodeFixtureSender::setup() {
 }
 
 void artnodeFixtureSender::update(ofEventArgs &a) {
-    ArtDmx* universe = client.createArtDmx(0, 0, 0);
     map<int, vector<char>> universesData;
     //map<int, ArtDmx*> universes;
     int currentUniv = 0;
@@ -86,7 +85,7 @@ void artnodeFixtureSender::update(ofEventArgs &a) {
                 if (universesData.count(startUniv) == 0) {
                     //ofLog() << "createUniverse " << startUniv;
                     //universes[startUniv] = client.createArtDmx(0, startUniv >> 4, startUniv & 0x0f);
-                    universesData[startUniv].resize(510);
+                    universesData[startUniv] = vector<char>(512);
                 }
                 
                 /*if (currentUniv != startUniv) {
@@ -124,13 +123,17 @@ void artnodeFixtureSender::update(ofEventArgs &a) {
         }
     }
     
+    ofxArtDmx* artdmx = client.createArtDmx(0, 0, 0);
     for (auto &uni : universesData) {
-        auto artdmx = client.createArtDmx(0, uni.first >> 4, uni.first & 0x0f);
+        artdmx->setSubUni(uni.first);
         for (int i = 0; i < uni.second.size(); i++) {
             //universes[startUniv]->Data[startChan - 1 + i] = datacopy[i];
             artdmx->Data[i] = uni.second[i];
         }
-        client.sendUniCast(ip, 6454, (char*)artdmx, artdmx->getSize());
+        for (int i = uni.second.size(); i < 512; i++) {
+            artdmx->Data[i] = 0;
+        }
+        client.sendMultiCast((char*)artdmx, artdmx->getSize());
     }
     //client.update();
 }
