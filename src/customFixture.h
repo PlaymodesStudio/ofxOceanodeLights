@@ -63,7 +63,7 @@ public:
                 numChannels += 1;
             }
         }
-        addParameter(output.set("Output", {}));
+        addOutputParameter(output.set("Output", {}));
         
         addInspectorParameter(numElements.set("Num Elements", 1, 1, INT_MAX));
         addInspectorParameter(universe.set("Universe", 0, 0, 65535));

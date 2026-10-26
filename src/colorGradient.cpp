@@ -22,9 +22,9 @@ void colorGradient::setup(){
     
     addParameter(indexs.set("Indexs", {1}, {0}, {1}));
     
-    addParameter(rOut.set("Red Out", {1}, {0}, {1}));
-    addParameter(gOut.set("Green Out", {1}, {0}, {1}));
-    addParameter(bOut.set("Blue Out", {1}, {0}, {1}));
+    addOutputParameter(rOut.set("Red Out", {1}, {0}, {1}));
+    addOutputParameter(gOut.set("Green Out", {1}, {0}, {1}));
+    addOutputParameter(bOut.set("Blue Out", {1}, {0}, {1}));
     
     listener = indexs.newListener([this](vector<float> &vf){
         vector<float> rOutTemp(vf.size());

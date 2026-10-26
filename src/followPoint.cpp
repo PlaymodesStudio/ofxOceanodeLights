@@ -16,12 +16,12 @@ void followPoint::setup(){
     addParameter(sortPoints.set("Sort Points", false));
     addParameter(randomizePoints.set("Randomize Points", false));
     
-    addParameter(panL.set("Pan L", {0}, {-180}, {180}));
-    addParameter(tiltL.set("Tilt L", {0}, {-180}, {180}));
-    addParameter(panC.set("Pan C", {0}, {-180}, {180}));
-    addParameter(tiltC.set("Tilt C", {0}, {-180}, {180}));
-    addParameter(panR.set("Pan R", {0}, {-180}, {180}));
-    addParameter(tiltR.set("Tilt R", {0}, {-180}, {180}));
+    addOutputParameter(panL.set("Pan L", {0}, {-180}, {180}));
+    addOutputParameter(tiltL.set("Tilt L", {0}, {-180}, {180}));
+    addOutputParameter(panC.set("Pan C", {0}, {-180}, {180}));
+    addOutputParameter(tiltC.set("Tilt C", {0}, {-180}, {180}));
+    addOutputParameter(panR.set("Pan R", {0}, {-180}, {180}));
+    addOutputParameter(tiltR.set("Tilt R", {0}, {-180}, {180}));
     addParameter(distribution.set("Distribution", {0}, {0}, {9}));
 
 	ofJson json = ofLoadJson("FollowPointPositions_" + ofToString(getNumIdentifier()) + ".json");

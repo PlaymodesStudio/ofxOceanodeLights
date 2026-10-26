@@ -18,8 +18,8 @@ public:
     void setup() override{
         addParameter(input.set("Input", {0}, {0}, {1}));
         addParameter(distribution.set("Distribution", {0, 1, 2, 3, 4, 0, 1, 2, 3, 4}, {0}, {9}));
-        addParameter(leftOutput.set("Left Output", {0}, {0}, {1}));
-        addParameter(rightOutput.set("Right Output", {0}, {0}, {1}));
+        addOutputParameter(leftOutput.set("Left Output", {0}, {0}, {1}));
+        addOutputParameter(rightOutput.set("Right Output", {0}, {0}, {1}));
         
         listener = input.newListener([this](vector<float> &vf){
             int size = vf.size();

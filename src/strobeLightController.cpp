@@ -19,8 +19,8 @@ void strobeLightController::setup(){
     addParameter(strobeRate.set("Strobe", {0}, {0}, {255}));
     addParameter(strobeWidth.set("Effect", {0}, {0}, {255}));
     addParameter(masterFader.set("Master Fader", 1, 0, 1));
-    addParameter(colorOutput.set("Color Output", {0}, {0}, {1}));
-	addParameter(output.set("Output", {}));
+    addOutputParameter(colorOutput.set("Color Output", {0}, {0}, {1}));
+	addOutputParameter(output.set("Output", {}));
 	
 	listener = numElements.newListener([this](int &i){
 		fixtures.resize(i);
