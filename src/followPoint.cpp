@@ -22,7 +22,7 @@ void followPoint::setup(){
     addOutputParameter(tiltC.set("Tilt C", {0}, {-180}, {180}));
     addOutputParameter(panR.set("Pan R", {0}, {-180}, {180}));
     addOutputParameter(tiltR.set("Tilt R", {0}, {-180}, {180}));
-    addParameter(distribution.set("Distribution", {0}, {0}, {9}));
+    addInputAndOutputParameter(distribution.set("Distribution", {0}, {0}, {9}));
 
 	ofJson json = ofLoadJson("FollowPointPositions_" + ofToString(getNumIdentifier()) + ".json");
 
