@@ -26,7 +26,7 @@ void registerModels(ofxOceanode &o){
     o.registerModel<colorGradient>("Lights"); 
     o.registerModel<followIndexsToMovingHeads>("Lights");
     o.registerModel<followPoint>("Lights");
-    o.registerModel<movingheadController>("Lights");
+    o.registerModel<movingheadController>("Lights", ofxOceanodeNodeRegistrationFlags::Sink);
     o.registerModel<panTiltEditor>("Lights");
     o.registerModel<strobeLightController>("Lights");
 	o.registerModel<artnodeFixtureSender>("Lights");
